@@ -15,8 +15,7 @@ class User(db.Model):
     username = db.Column(db.String(16), unique = True, nullable = False)
     password = db.Column(db.String(256), nullable = False)
 
-    posts = db.relationship("Post", backref="made")
-    likes = db.relationship("Likes", backref="liked_post")
+    posts = db.relationship("Post", backref="author")
 
 
     def __init__(self, first_name, last_name, username, password):
@@ -54,7 +53,6 @@ class User(db.Model):
             "last_name": self.last_name,
             "username": self.username,
             "posts": [post.to_response() for post in self.posts],
-            "likes": [like.to_response() for like in self.likes]
         }
 
 
@@ -67,15 +65,13 @@ class Post(db.Model):
     caption = db.Column(db.Text)
     created_by = db.Column(db.String(64), db.ForeignKey("user.id"), nullable = False)
 
-    author = db.relationship("User", backref="author")
-    likes = db.relationship("Likes", backref="liked")
 
-    def __init__(self, img_url, title,  caption, author):
+    def __init__(self, img_url, title,  caption, created_by):
         self.id = str(uuid4())
         self.img_url = img_url
         self.title = title
         self.caption = caption
-        self.created_by = author
+        self.created_by = created_by
         
     def create(self):
         db.session.add(self)
@@ -98,36 +94,6 @@ class Post(db.Model):
             "img_url": self.img_url,
             "title": self.title,
             "caption": self.caption,
-            "created_by": self.author.username,
-            "liked_by": self.liked_by.username
+            "created_by": self.created_by,
         }
 
-class Likes(db.Model):
-    id = db.Column(db.String(64), primary_key = True)
-    user_id = db.Column(db.String(64), db.ForeignKey("user.id"))
-    post_id = db.Column(db.String(64), db.ForeignKey("post.id"))
-
-    def __init__(self, post_id, user_id):
-        self.id = str(uuid4())
-        self.post_id = post_id
-        self.user_id = user_id
-
-    def create(self):
-        db.session.add(self)
-        db.session.commit()
-
-    def delete(self):
-        db.session.delete(self)
-        db.session.commit()
-
-    def update(self, **kwargs):
-        for key, value in kwargs.items():
-            setattr(self, key, value)
-        db.session.commit()
-
-    def to_response(self):
-        return {
-            "id": self.id,
-            "post_id": self.post_id,
-            "user_id": self.user_id
-        }

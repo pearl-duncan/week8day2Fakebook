@@ -4,7 +4,7 @@ from flask_jwt_extended import jwt_required, current_user
 from .models import Post
 from .utils import bad_request_if_none
 
-@app.route("/new")
+@app.post("/new")
 @jwt_required()
 def create_post():
     body = request.json
@@ -42,7 +42,8 @@ def create_post():
             "message": "that title is already in use"
         }
         return response, 400
-    post = Post(title=title, caption=caption, created_by=current_user.id)
+    
+    post = Post(title=title, img_url=image, caption=caption, created_by=current_user.id)
     post.create()
     response = {
         "message": "successfully created post",
@@ -50,7 +51,7 @@ def create_post():
     }
     return response, 201
 
-@app.route("/all")
+@app.post("/all")
 def handle_get_all_posts():
     posts = Post.query.all()
     response = {
@@ -59,7 +60,7 @@ def handle_get_all_posts():
     }
     return response, 200
 
-@app.route("/mine")
+@app.post("/mine")
 @jwt_required()
 def handle_get_my_posts():
     posts = Post.query.filter_by(created_by=current_user.id).all()
@@ -69,7 +70,7 @@ def handle_get_my_posts():
     }
     return response, 200
 
-@app.route("/<post_id>")
+@app.post("/<post_id>")
 @jwt_required()
 def handle_get_one_post(post_id):
     post = Post.query.filter_by(id=post_id).one_or_none()
@@ -84,7 +85,7 @@ def handle_get_one_post(post_id):
     }
     return response, 200
 
-@app.route("/delete-post/<post_id>")
+@app.post("/delete-post/<post_id>")
 @jwt_required()
 def handle_delete_post(post_id):
     post = Post.query.filter_by(id=post_id).one_or_none()
@@ -107,7 +108,7 @@ def handle_delete_post(post_id):
 
 
 
-@app.route("/update-post/<post_id>")
+@app.post("/update-post/<post_id>")
 @jwt_required()
 def handle_update_post(post_id):
     body = request.json
